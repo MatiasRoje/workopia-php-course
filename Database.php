@@ -15,20 +15,40 @@ class Database
 
         $options = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => pdo::FETCH_OBJ,
         ];
 
         try {
             $this->conn = new PDO(
                 $dsn,
                 $config["username"],
-                $config["password"]
+                $config["password"],
+                $options
             );
-
-            echo "connected";
         } catch (PDOException $e) {
             throw new Exception(
                 "Database connection failed: {$e->getMessage()}"
             );
+        }
+    }
+
+    // NOTE describe
+    /**
+     * Query the database
+     *
+     * @param string $query
+     *
+     * @return PDOStatement
+     * @throws PDFOException
+     */
+    public function query($query)
+    {
+        try {
+            $sth = $this->conn->prepare($query);
+            $sth->execute();
+            return $sth;
+        } catch (PDOException $e) {
+            throw new Exception("Query failed to execute: {$e->getMessage()}");
         }
     }
 }
