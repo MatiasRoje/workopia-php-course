@@ -1,0 +1,13 @@
+{
+  "name": "matiasroje/workopia-php-course",
+  "description": "Job listing application",
+  "authors": [
+    {"name": "Matias Roje"}
+  ],
+  "autoload": {
+    "psr-4": {
+      "Framework\\": "Framework/",
+      "App\\": "App/"
+    }
+  }
+}
