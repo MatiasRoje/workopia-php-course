@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use Framework\Database;
 use Framework\Validation;
+use Framework\Session;
 
 class UserController
 {
@@ -60,13 +61,12 @@ class UserController
             $errors["name"] = "Name must be between 2 and 50 characters";
         }
 
-        if (!Validation::string($name, 6, 50)) {
-            $errors["password"] =
-                "Password must be at least 6 and 50 characters";
+        if (!Validation::string($password, 6, 50)) {
+            $errors["password"] = "Password must be at least 6 characters";
         }
 
         if (!Validation::match($password, $passwordConfirmation)) {
-            $errors["password_confirmation"] = "Password do not match";
+            $errors["password_confirmation"] = "Passwords do not match";
         }
 
         if (!empty($errors)) {
@@ -80,8 +80,52 @@ class UserController
                 ],
             ]);
             exit();
-        } else {
-            inspectAndDie("Store");
         }
+
+        // Check if email exists
+        $params = [
+            "email" => $email,
+        ];
+
+        $user = $this->db
+            ->query("SELECT * FROM users WHERE email = :email", $params)
+            ->fetch();
+
+        if ($user) {
+            $errors["email"] = "That email already exists";
+            loadView("users/create", [
+                "errors" => $errors,
+            ]);
+            exit();
+        }
+
+        // Create user account
+        $params = [
+            "name" => $name,
+            "email" => $email,
+            "city" => $city,
+            "state" => $state,
+            "password" => password_hash($password, PASSWORD_DEFAULT),
+        ];
+
+        $this->db->query(
+            "INSERT INTO users (name, email, city, state, password) VALUES (:name, :email, :city, :state, :password)",
+            $params
+        );
+
+        // Get new user ID
+        $userId = $this->db->conn->lastInsertId();
+
+        Session::set("user", [
+            "id" => $userId,
+            "name" => $name,
+            "email" => $email,
+            "city" => $city,
+            "state" => $state,
+        ]);
+
+        inspectAndDie(Session::get("user"));
+
+        redirect("/");
     }
 }
